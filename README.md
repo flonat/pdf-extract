@@ -1,5 +1,7 @@
 # pdf-extract
 
+> **For people building RAG, agents, or literature-review tools over an academic PDF library.** If you've reinvented this layer — fast text path, fall back to a structure-aware path, cache the results SHA-keyed, expose section/table/figure reads — this is that layer, packaged. Composes with [`pdf-clean`](https://github.com/flonat/pdf-clean) for deterministic post-extraction normalisation.
+
 Structure-aware PDF extraction with an on-disk cache. Routes to `pymupdf4llm` (fast path) or `marker-pdf` (structure-aware) per backend choice. Stable typed return shape, cache-aware composition with `pdf-clean`, MCP + CLI surfaces.
 
 ```
