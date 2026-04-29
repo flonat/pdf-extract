@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+.DS_Store
+
+# Test fixtures — large, copyrighted; excluded from VCS, populated locally.
+tests/fixtures/*.pdf

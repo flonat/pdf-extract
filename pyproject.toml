@@ -1,0 +1,30 @@
+[project]
+name = "pdf-extract"
+version = "0.1.0"
+description = "Structure-aware PDF extraction with on-disk cache. Routes to pymupdf4llm (fast) or Marker (structure-aware) per backend choice."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+dependencies = [
+    "pymupdf4llm>=0.0.17",
+]
+
+[project.optional-dependencies]
+marker = [
+    # Marker-PDF: structure-aware extraction (tables, figures, equations).
+    # Heavy: pulls torch + multiple ML models on first install.
+    "marker-pdf>=1.0.0",
+]
+docling = [
+    # Future-reserved. Not implemented in v0.1.0.
+]
+
+[project.scripts]
+pdf-extract = "pdf_extract.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pdf_extract"]
