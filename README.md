@@ -1,23 +1,37 @@
 # pdf-extract
 
-> **For people building RAG, agents, or literature-review tools over an academic PDF library.** If you've reinvented this layer — fast text path, fall back to a structure-aware path, cache the results SHA-keyed, expose section/table/figure reads — this is that layer, packaged. Composes with [`pdf-clean`](https://github.com/flonat/pdf-clean) for deterministic post-extraction normalisation.
-
-Structure-aware PDF extraction with an on-disk cache. Routes to `pymupdf4llm` (fast path) or `marker-pdf` (structure-aware) per backend choice. Stable typed return shape, cache-aware composition with `pdf-clean`, MCP + CLI surfaces.
+**Turn academic PDFs into structured Markdown — with tables, figures, equations, references, and metadata — and cache the results so subsequent reads are instant.** Designed for people building RAG systems, AI agents, or literature-review tools over a personal paper library.
 
 ```
-PDF ──► extract(backend="auto") ──► ExtractedDoc { markdown, tables, figures, references, metadata }
-                │
-                ├─ pymupdf4llm  (fast: ~3s, flattens tables, no figures)
-                └─ marker       (slow: ~30-60s/CPU, tables as Markdown, figures as PNG, LaTeX equations)
-                                │
-                                └─ on-disk cache keyed by sha1(pdf) + backend + version
+your.pdf  ──►  extract(backend="auto")  ──►  ExtractedDoc {
+                                                markdown,         # full text
+                                                tables,           # as Markdown tables
+                                                figures,          # as PNG paths
+                                                references,       # bibliography
+                                                metadata,         # title, authors, n_pages
+                                              }
+                       │
+                       ├─ pymupdf4llm  (fast: ~3s, flattens tables, no figures)
+                       └─ marker       (~30-60s/CPU, full structure)
+                                       │
+                                       └─ on-disk cache: warm reads <50ms
 ```
 
-## Why
+## How this fits with `pdf-clean`
 
-`pymupdf4llm` is fast but flattens tables and ignores figures. `marker-pdf` extracts structure but pays a heavy first-call cost (~3-5GB of models, ~30-60s/paper on CPU). Most reads only need fast text; some downstream tasks (deep lit-review, section-scoped reads, table extraction) need structure. This package picks the right backend per call, caches the result so warm reads are instant, and exposes a stable API to multiple consumers.
+| Step | Package | What it does |
+|---|---|---|
+| 1. Extract | **`pdf-extract`** (this repo) | PDF → structured Markdown + tables + figures + references |
+| 2. Clean | [`pdf-clean`](https://github.com/flonat/pdf-clean) | Markdown → deterministically-normalised text (strip running headers, fix hyphenation, ligatures, etc.) |
+| 3. Use | your code | Embed for RAG, send to LLM, render in a UI, etc. |
 
-`pdf-clean` runs orthogonally on the markdown output — see [`docs/integration.md`](docs/integration.md).
+The two packages are deliberately separated: `pdf-extract` does I/O (PDF parsing, cache reads/writes); `pdf-clean` is a pure string-in/string-out function. You can use them together or independently.
+
+## Why this exists
+
+`pymupdf4llm` is fast (~3 s/PDF) but flattens tables and ignores figures. `marker-pdf` extracts structure but pays a heavy first-call cost (~3-5 GB of models, ~30-60 s/paper on CPU). Most reads only need fast text; some tasks (deep lit-review, section-scoped reads, table extraction) need structure. This package picks the right backend per call, caches the result keyed by `sha1(pdf) + backend + version` so warm reads are <50 ms, and exposes a stable typed return shape to every consumer (programmatic, CLI, MCP server).
+
+> **What's Paperpile?** A cloud-based reference manager popular among academics (alternative to Zotero/Mendeley). It exports your library as a JSON file plus a synced PDF mirror — handy for building local tooling. `pdf-extract` works with any PDF; the optional Paperpile integration just adds bulk-extract priority based on which papers are cited in your active project bibliographies. If you don't use Paperpile, ignore that section — point `pdf-extract` at any directory of PDFs and it works.
 
 ## Install
 
@@ -68,9 +82,9 @@ pdf-extract paper.pdf --backend marker         # force backend
 pdf-extract paper.pdf --no-cache               # bypass cache
 ```
 
-### MCP (via `mcp-paperpile`)
+### MCP integration via [`mcp-paperpile`](https://github.com/flonat/mcp-paperpile) (optional)
 
-Six PDF tools auto-derived from the registry, all backed by `pdf-extract`:
+If you use [Paperpile](https://paperpile.com) (cloud reference manager) as your library, `mcp-paperpile` exposes six PDF tools backed by `pdf-extract`. Each takes a Paperpile citekey, resolves the PDF path, calls `extract()`, and (for text/section paths) pipes through `pdf-clean`:
 
 ```bash
 paperpile get-pdf-text       --citekey Smith2024-ab
@@ -81,7 +95,7 @@ paperpile get-pdf-references --citekey Smith2024-ab
 paperpile get-pdf-metadata   --citekey Smith2024-ab
 ```
 
-The `mcp-paperpile` library resolves the citekey to a PDF path, calls `extract()`, and (for text/section paths) pipes through `pdf-clean` profile=`llm_read`. See [`docs/integration.md`](docs/integration.md).
+If you don't use Paperpile, skip this section — the standalone `pdf-extract` CLI works on any PDF path. See [`docs/integration.md`](docs/integration.md) for how the citekey resolution works (it's small enough to copy if you're rolling your own library wrapper).
 
 ## Cache
 
@@ -103,7 +117,7 @@ Cache key: `sha1(pdf_bytes)[:16] + "_" + backend + "_v" + EXTRACT_VERSION`. Bump
 
 ## Bulk extraction
 
-A nightly launchd cron (`com.flonat.pdf-extract-bulk`, `02:00`, 6h budget) progressively extracts the Paperpile library with Marker. See [`scripts/bulk_extract.py`](scripts/bulk_extract.py) and [`docs/integration.md`](docs/integration.md#bulk-marker-cron).
+For users with a large library who want to fill the cache progressively in the background: [`scripts/bulk_extract.py`](scripts/bulk_extract.py) walks a Paperpile JSON export, builds a priority queue (papers cited in active project bibliographies first, then recent additions, then long tail), and runs `extract()` until a wall-clock budget is exhausted. Per-paper SIGALRM timeout guards against pathological PDFs (book-length textbooks routinely hang `pymupdf4llm`). Configure via env vars (`PAPERPILE_JSON`, `PAPERPILE_PDF_ROOT`, `RESEARCH_PROJECTS_ROOT`) and run on whatever schedule fits your machine — the macOS launchd plist pattern (`scripts/run_bulk_extract.sh`) is one option. See [`docs/integration.md`](docs/integration.md#bulk-marker-cron).
 
 ## Performance reference
 
