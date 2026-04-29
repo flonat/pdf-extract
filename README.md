@@ -27,6 +27,33 @@ your.pdf  ──►  extract(backend="auto")  ──►  ExtractedDoc {
 
 The two packages are deliberately separated: `pdf-extract` does I/O (PDF parsing, cache reads/writes); `pdf-clean` is a pure string-in/string-out function. You can use them together or independently.
 
+### Use them together (recommended for academic papers)
+
+```python
+from pdf_extract import extract       # this repo
+from pdf_clean   import clean         # https://github.com/flonat/pdf-clean
+
+# 1. Extract — auto-routes to the cheap backend, falls back to Marker if needed.
+#    Caches the result on disk so the next call on the same PDF is <50 ms.
+doc = extract("paper.pdf", backend="auto")
+
+# 2. Clean — three different profiles for three downstream uses.
+#    pdf-clean is pure: no I/O, no LLM calls, deterministic.
+text_for_rag    = clean(doc.markdown, profile="embedding")     # → vector index
+text_for_llm    = clean(doc.markdown, profile="llm_read")      # → LLM context
+text_for_review = clean(doc.markdown, profile="peer_review")   # → review pipeline
+
+# 3. The structured fields don't go through pdf-clean — they're already structured.
+for table in doc.tables:
+    print(table.markdown)             # already a Markdown table
+for fig in doc.figures:
+    print(fig.image_path)             # already a PNG on disk
+```
+
+The cache stores raw extracted Markdown (pre-clean). One cache entry serves all three `pdf-clean` profiles, so swapping profiles never re-extracts.
+
+Install both: `pip install pdf-extract pdf-clean` (once published; today: `uv pip install -e ../pdf-extract -e ../pdf-clean` from sibling checkouts).
+
 ## Why this exists
 
 `pymupdf4llm` is fast (~3 s/PDF) but flattens tables and ignores figures. `marker-pdf` extracts structure but pays a heavy first-call cost (~3-5 GB of models, ~30-60 s/paper on CPU). Most reads only need fast text; some tasks (deep lit-review, section-scoped reads, table extraction) need structure. This package picks the right backend per call, caches the result keyed by `sha1(pdf) + backend + version` so warm reads are <50 ms, and exposes a stable typed return shape to every consumer (programmatic, CLI, MCP server).
