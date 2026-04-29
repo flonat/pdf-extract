@@ -1,5 +1,5 @@
-"""Bulk Marker extraction cron — fills the pdf-extract cache for the
-Paperpile library, prioritised by relevance.
+"""Bulk Marker extraction cron — fills the pdf-extract cache for a
+Paperpile library, prioritised by relevance to active projects.
 
 Designed to run nightly via launchd in a time-bounded window. Each run:
   1. Loads Paperpile JSON export.
@@ -8,15 +8,23 @@ Designed to run nightly via launchd in a time-bounded window. Each run:
   4. Runs `extract(..., backend='marker')` per paper until time budget exhausted.
   5. Logs structured progress to stdout (captured by launchd to log file).
 
-The cache lives at /Volumes/SSD/pdf-extract-cache/ — `extract()` writes there
-automatically, and warm reads from anywhere (paperpile MCP, paper container,
-direct CLI) hit the same cache.
+Cache directory: see `pdf_extract.cache._default_cache_root()`. On macOS this
+defaults to `/Volumes/SSD/pdf-extract-cache/` if that volume exists, else
+`~/.cache/pdf-extract/`. Override with `PDF_EXTRACT_CACHE_DIR=...`.
 
-Phase C of the 2026-04-29 PDF launch plan.
+Configuration is via env vars (with CLI overrides). All paths must be set —
+this script intentionally has no hardcoded user paths so it works on any
+machine without modification:
+
+  PAPERPILE_JSON          : path to Paperpile JSON export
+  PAPERPILE_PDF_ROOT      : path to local PDF mirror
+  RESEARCH_PROJECTS_ROOT  : path to research projects tree (for bib priority);
+                            optional — set to empty string to disable priority
 
 Usage:
     bulk_extract.py [--max-runtime SECONDS] [--max-papers N] [--no-prioritise]
-                    [--paperpile-json PATH] [--pdf-root PATH] [--per-paper-timeout SEC]
+                    [--paperpile-json PATH] [--pdf-root PATH]
+                    [--projects-root PATH] [--per-paper-timeout SEC]
 """
 from __future__ import annotations
 
@@ -30,9 +38,17 @@ from pathlib import Path
 
 from pdf_extract import extract
 
-DEFAULT_PAPERPILE = Path("/Users/florianburnat/Task-Management/packages/mcp-paperpile/paperpile-backup.json")
-DEFAULT_PDF_ROOT = Path("/Volumes/SSD/paperpile-pdfs")
-DEFAULT_PROJECTS_ROOT = Path("/Volumes/SSD/Dropbox/Research/Projects")
+
+def _env_path(var: str) -> Path | None:
+    val = os.environ.get(var)
+    if not val:
+        return None
+    return Path(val).expanduser()
+
+
+DEFAULT_PAPERPILE = _env_path("PAPERPILE_JSON")
+DEFAULT_PDF_ROOT = _env_path("PAPERPILE_PDF_ROOT")
+DEFAULT_PROJECTS_ROOT = _env_path("RESEARCH_PROJECTS_ROOT")
 DEFAULT_MAX_RUNTIME = 6 * 60 * 60  # 6 hours
 DEFAULT_PER_PAPER_TIMEOUT = 120    # 2 min Marker hard cap per paper
 
@@ -132,12 +148,21 @@ def main() -> int:
                    help="Per-paper timeout in seconds")
     p.add_argument("--no-prioritise", action="store_true",
                    help="Skip project-bib priority pass (random library order)")
-    p.add_argument("--paperpile-json", type=Path, default=DEFAULT_PAPERPILE)
-    p.add_argument("--pdf-root", type=Path, default=DEFAULT_PDF_ROOT)
-    p.add_argument("--projects-root", type=Path, default=DEFAULT_PROJECTS_ROOT)
+    p.add_argument("--paperpile-json", type=Path, default=DEFAULT_PAPERPILE,
+                   help="Path to Paperpile JSON export (or set $PAPERPILE_JSON)")
+    p.add_argument("--pdf-root", type=Path, default=DEFAULT_PDF_ROOT,
+                   help="Path to local PDF mirror (or set $PAPERPILE_PDF_ROOT)")
+    p.add_argument("--projects-root", type=Path, default=DEFAULT_PROJECTS_ROOT,
+                   help="Path to research projects tree for bib priority "
+                        "(or set $RESEARCH_PROJECTS_ROOT). Pass empty / unset to disable.")
     p.add_argument("--cache-root", type=Path, default=None,
-                   help="Override cache root (default: PDF_EXTRACT_CACHE_DIR or auto)")
+                   help="Override cache root (default: $PDF_EXTRACT_CACHE_DIR or auto)")
     args = p.parse_args()
+
+    if args.paperpile_json is None:
+        p.error("paperpile JSON path is required: pass --paperpile-json or set $PAPERPILE_JSON")
+    if args.pdf_root is None:
+        p.error("PDF root is required: pass --pdf-root or set $PAPERPILE_PDF_ROOT")
 
     if args.cache_root:
         os.environ["PDF_EXTRACT_CACHE_DIR"] = str(args.cache_root)
@@ -152,7 +177,7 @@ def main() -> int:
     library = json.loads(args.paperpile_json.read_text())
     print(f"  library: {len(library)} entries")
 
-    if args.no_prioritise:
+    if args.no_prioritise or args.projects_root is None:
         queue = [(e, p) for e in library if (p := resolve_pdf(e, args.pdf_root)) is not None]
         print(f"  queue: {len(queue)} papers (un-prioritised)")
     else:
