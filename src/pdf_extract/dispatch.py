@@ -18,7 +18,6 @@ EXTRACT_VERSION = "0.1.0"
 Backend = Literal["auto", "pymupdf4llm", "marker", "docling"]
 
 _AUTO_FALLBACK_MIN_CHARS = 100  # below this, pymupdf4llm output is unusable
-_AUTO_TABLE_HINT = re.compile(r"\b(table|tbl\.?)\s*\d+", re.IGNORECASE)
 
 
 def extract(
@@ -87,19 +86,20 @@ def _extract_marker(pdf_path: Path, figures_dir: Path | None,
 
 def _extract_auto(pdf_path: Path, figures_dir: Path | None,
                   skip_ocr: bool, use_cache: bool) -> ExtractedDoc:
-    """Try pymupdf4llm first; fall back to Marker if (a) text is too short
-    (likely scanned), or (b) markdown mentions tables but extracted none."""
+    """Try pymupdf4llm first; fall back to Marker only if text is suspiciously
+    thin (likely scanned PDF or extraction failure).
+
+    Note: we deliberately do NOT trigger fallback on "mentions Table N but
+    extracted no tables" — academic papers routinely reference tables in
+    prose, and pymupdf4llm flattens table content into prose anyway. Callers
+    who explicitly need structured tables should pass backend='marker'.
+    """
     fast = _extract_pymupdf(pdf_path, use_cache)
-    needs_fallback = (
-        len(fast.markdown) < _AUTO_FALLBACK_MIN_CHARS
-        or (_AUTO_TABLE_HINT.search(fast.markdown) and not fast.tables)
-    )
-    if not needs_fallback:
+    if len(fast.markdown) >= _AUTO_FALLBACK_MIN_CHARS:
         return fast
     try:
         return _extract_marker(pdf_path, figures_dir, skip_ocr, use_cache)
     except ImportError:
-        # Marker not installed — return fast result with a note in metadata
         fast.metadata["auto_fallback"] = "marker_unavailable"
         return fast
 
