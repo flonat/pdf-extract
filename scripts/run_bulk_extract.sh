@@ -25,8 +25,16 @@ cd "$PDF_EXTRACT_DIR"
 # Prefer the system uv if present (Homebrew on macOS, ~/.local/bin on Linux).
 UV="$(command -v uv || echo /opt/homebrew/bin/uv)"
 
-exec "$UV" run python scripts/bulk_extract.py \
-    --max-runtime "${PDF_EXTRACT_MAX_RUNTIME:-21600}" \
+# Hard wall-clock kill via coreutils `timeout` — outer guard in case
+# python-side --max-runtime is bypassed by Marker subprocesses or wedges.
+# Budget = python timer + 600s grace, so the python timer is preferred path.
+TIMEOUT_BIN="$(command -v timeout || command -v gtimeout)"
+PY_RUNTIME="${PDF_EXTRACT_MAX_RUNTIME:-21600}"
+HARD_RUNTIME=$((PY_RUNTIME + 600))
+export PYTHONUNBUFFERED=1
+
+exec "$TIMEOUT_BIN" --kill-after=60 "$HARD_RUNTIME" "$UV" run python scripts/bulk_extract.py \
+    --max-runtime "$PY_RUNTIME" \
     --max-papers "${PDF_EXTRACT_MAX_PAPERS:-2000}" \
-    --per-paper-timeout 120 \
+    --per-paper-timeout 600 \
     >> "$LOG" 2>&1

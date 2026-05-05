@@ -6,5 +6,8 @@ build/
 dist/
 .DS_Store
 
+# Runtime logs from launchd jobs (per-machine, not VCS).
+log/
+
 # Test fixtures — large, copyrighted; excluded from VCS, populated locally.
 tests/fixtures/*.pdf
