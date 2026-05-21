@@ -39,7 +39,7 @@ print(sys.executable)
 
 In the workspace, multiple venvs exist:
 - `packages/pdf-extract/.venv/` — has marker (after `uv pip install -e '.[marker]'`)
-- `packages/mcp-paperpile/.venv/` — has marker (after wiring step)
+- `packages/paperpile/.venv/` — has marker (after wiring step)
 - `packages/refpile/.venv/` — does NOT have marker (refpile uses pymupdf4llm only)
 
 **Fix:** install the extra in the right venv:
@@ -59,14 +59,14 @@ uv pip install -e '../pdf-extract[marker]'
 
 **Workaround for fresh machines:** pre-warm by running an extract on any small PDF before you need real performance. The container's `paper-warm-mcps` recipe does this implicitly via `pdf-extract --version`.
 
-## "ModuleNotFoundError: No module named 'pdf_clean'" in mcp-paperpile
+## "ModuleNotFoundError: No module named 'pdf_clean'" in paperpile
 
 **Symptom:** Calling `paperpile get-pdf-text` returns "Error: pdf-extract not installed" or similar.
 
 **Cause:** sibling-package wiring isn't always automatic with `uv sync`. After a fresh checkout or `uv lock` regen:
 
 ```bash
-cd packages/mcp-paperpile
+cd packages/paperpile
 uv pip install -e ../pdf-clean
 uv pip install -e ../pdf-extract[marker]
 ```

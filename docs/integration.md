@@ -14,7 +14,7 @@ How `pdf-extract` is consumed across the rest of the workspace.
        │                  │                                │
        ▼                  ▼                                ▼
 ┌──────────────┐   ┌──────────────────┐         ┌─────────────────────┐
-│ mcp-paperpile│   │  paper-writing   │         │   bulk_extract.py   │
+│ paperpile│   │  paper-writing   │         │   bulk_extract.py   │
 │  (6 tools)   │   │  container       │         │   (launchd cron)    │
 └──────┬───────┘   │  (CLI shim)      │         │   nightly @ 02:00   │
        │           └──────────────────┘         └─────────────────────┘
@@ -25,9 +25,9 @@ How `pdf-extract` is consumed across the rest of the workspace.
 
 All four consumers share the same on-disk cache at `/Volumes/SSD/pdf-extract-cache/` (or `PDF_EXTRACT_CACHE_DIR`). Once a PDF is extracted by any path, every other path benefits.
 
-## mcp-paperpile (the primary consumer)
+## paperpile (the primary consumer)
 
-`packages/mcp-paperpile/src/paperpile_mcp/library.py` exposes six PDF tools, all backed by `pdf-extract`.
+`packages/paperpile/src/paperpile/library.py` exposes six PDF tools, all backed by `pdf-extract`.
 
 | Tool | Backend used | Why |
 |---|---|---|
@@ -43,16 +43,16 @@ All four consumers share the same on-disk cache at `/Volumes/SSD/pdf-extract-cac
 ### Wiring
 
 ```bash
-# In mcp-paperpile's venv:
+# In paperpile's venv:
 uv pip install -e ../pdf-extract           # default fast path only
 uv pip install -e ../pdf-extract[marker]   # full structure-aware
 ```
 
-`mcp-paperpile/pyproject.toml` deliberately does NOT pin pdf-extract — it's installed as an editable sibling. This matches how `pdf-clean` is wired and lets local changes propagate without version churn.
+`paperpile/pyproject.toml` deliberately does NOT pin pdf-extract — it's installed as an editable sibling. This matches how `pdf-clean` is wired and lets local changes propagate without version churn.
 
 ## Paper-writing container
 
-`/Volumes/SSD/claude-container/`'s `paper-warm-mcps` recipe copies `pdf-extract` into the container's writable `/home/coder/.pkgs/` and installs it (with `[marker]`) into the paperpile venv. A CLI shim at `/home/coder/.local/bin/pdf-extract` wraps `uv run --project /home/coder/.pkgs/mcp-paperpile pdf-extract`.
+`/Volumes/SSD/claude-container/`'s `paper-warm-mcps` recipe copies `pdf-extract` into the container's writable `/home/coder/.pkgs/` and installs it (with `[marker]`) into the paperpile venv. A CLI shim at `/home/coder/.local/bin/pdf-extract` wraps `uv run --project /home/coder/.pkgs/paperpile pdf-extract`.
 
 The host's cache dir is bind-mounted at `/pdf-extract-cache` with `PDF_EXTRACT_CACHE_DIR=/pdf-extract-cache`. So:
 

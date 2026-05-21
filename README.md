@@ -109,9 +109,9 @@ pdf-extract paper.pdf --backend marker         # force backend
 pdf-extract paper.pdf --no-cache               # bypass cache
 ```
 
-### MCP integration via [`mcp-paperpile`](https://github.com/flonat/mcp-paperpile) (optional)
+### MCP integration via [`paperpile`](https://github.com/flonat/paperpile) (optional)
 
-If you use [Paperpile](https://paperpile.com) (cloud reference manager) as your library, `mcp-paperpile` exposes six PDF tools backed by `pdf-extract`. Each takes a Paperpile citekey, resolves the PDF path, calls `extract()`, and (for text/section paths) pipes through `pdf-clean`:
+If you use [Paperpile](https://paperpile.com) (cloud reference manager) as your library, `paperpile` exposes six PDF tools backed by `pdf-extract`. Each takes a Paperpile citekey, resolves the PDF path, calls `extract()`, and (for text/section paths) pipes through `pdf-clean`:
 
 ```bash
 paperpile get-pdf-text       --citekey Smith2024-ab
@@ -163,7 +163,7 @@ Benchmarks from Mac Mini M4, CPU only, on a typical 18-page Annual Review paper 
 ## Docs
 
 - [`docs/architecture.md`](docs/architecture.md) — backends, dispatch, cache, why each design choice
-- [`docs/integration.md`](docs/integration.md) — how `mcp-paperpile`, the paper-writing container, and the bulk cron consume `pdf-extract`
+- [`docs/integration.md`](docs/integration.md) — how `paperpile`, the paper-writing container, and the bulk cron consume `pdf-extract`
 - [`docs/troubleshooting.md`](docs/troubleshooting.md) — Marker hangs, MPS, cache invalidation, common errors
 
 ## Status
