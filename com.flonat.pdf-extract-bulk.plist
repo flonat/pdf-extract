@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>HOME</key>
+		<string>/Users/florianburnat</string>
+		<key>PAPERPILE_JSON</key>
+		<string>/Users/florianburnat/Task-Management/packages/mcp-paperpile/paperpile-backup.json</string>
+		<key>PAPERPILE_PDF_ROOT</key>
+		<string>/Volumes/SSD/paperpile-pdfs</string>
+		<key>PATH</key>
+		<string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+		<key>PDF_EXTRACT_CACHE_DIR</key>
+		<string>/Volumes/SSD/pdf-extract-cache</string>
+		<key>PYTHONUNBUFFERED</key>
+		<string>1</string>
+		<key>RESEARCH_PROJECTS_ROOT</key>
+		<string>/Volumes/SSD/Dropbox/Research/Projects</string>
+	</dict>
+	<key>KeepAlive</key>
+	<false/>
+	<key>Label</key>
+	<string>com.flonat.pdf-extract-bulk</string>
+	<key>LowPriorityIO</key>
+	<true/>
+	<key>Nice</key>
+	<integer>10</integer>
+	<key>ProcessType</key>
+	<string>Background</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/bash</string>
+		<string>/Users/florianburnat/Task-Management/packages/pdf-extract/scripts/run_bulk_extract.sh</string>
+	</array>
+	<key>RunAtLoad</key>
+	<false/>
+	<key>StandardErrorPath</key>
+	<string>/Users/florianburnat/Task-Management/packages/pdf-extract/log/launchd-stderr.log</string>
+	<key>StandardOutPath</key>
+	<string>/Users/florianburnat/Task-Management/packages/pdf-extract/log/launchd-stdout.log</string>
+	<key>StartCalendarInterval</key>
+	<dict>
+		<key>Hour</key>
+		<integer>2</integer>
+		<key>Minute</key>
+		<integer>0</integer>
+	</dict>
+	<key>StartOnMount</key>
+	<true/>
+</dict>
+</plist>
