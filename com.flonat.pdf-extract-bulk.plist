@@ -7,7 +7,7 @@
 		<key>HOME</key>
 		<string>/Users/USERNAME</string>
 		<key>PAPERPILE_JSON</key>
-		<string>/Users/USERNAME/Task-Management/packages/mcp-paperpile/paperpile-backup.json</string>
+		<string>/Users/USERNAME/Research-Vault/.paperpile/paperpile-backup.json</string>
 		<key>PAPERPILE_PDF_ROOT</key>
 		<string>/Volumes/SSD/paperpile-pdfs</string>
 		<key>PATH</key>
