@@ -12,10 +12,11 @@ from pdf_extract.models import ExtractedDoc
 FIXTURE = Path(__file__).parent / "fixtures" / "sample_paper.pdf"
 
 
-def test_unknown_backend_raises():
+def test_unknown_backend_raises(tmp_path):
+    fake = tmp_path / "fake.pdf"
+    fake.write_bytes(b"%PDF-1.4\n%%EOF")
     with pytest.raises(ValueError):
-        extract(FIXTURE if FIXTURE.exists() else Path("/nonexistent.pdf"),
-                backend="rocketship")  # type: ignore
+        extract(fake, backend="rocketship")  # type: ignore
 
 
 def test_missing_file_raises(tmp_path):
