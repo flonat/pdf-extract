@@ -109,7 +109,7 @@ pdf-extract paper.pdf --backend marker         # force backend
 pdf-extract paper.pdf --no-cache               # bypass cache
 ```
 
-### MCP integration via [`paperpile`](https://github.com/flonat/paperpile) (optional)
+### MCP integration via `paperpile` (optional)
 
 If you use [Paperpile](https://paperpile.com) (cloud reference manager) as your library, `paperpile` exposes six PDF tools backed by `pdf-extract`. Each takes a Paperpile citekey, resolves the PDF path, calls `extract()`, and (for text/section paths) pipes through `pdf-clean`:
 
