@@ -30,7 +30,9 @@ build-backend = "hatchling.build"
 packages = ["src/pdf_extract"]
 
 [dependency-groups]
-dev = ["ruff>=0.8.0"]
+dev = [
+    "ruff>=0.8.0",
+]
 
 [tool.ruff]
 line-length = 99
