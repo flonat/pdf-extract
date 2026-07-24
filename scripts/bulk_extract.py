@@ -349,6 +349,7 @@ def main() -> int:
     n_timeout = 0
     n_skipped = 0
     n_memguard = 0
+    n_preflight = 0
 
     watchdog_stop = None
     if args.max_rss_mb > 0:
@@ -369,6 +370,26 @@ def main() -> int:
                     break
 
             citekey = entry.get("citekey", "?")
+
+            # Read-integrity preflight: a FAIL means the PDF's page-count
+            # signals disagree (truncated / mispaginated read) — extracted
+            # text and page anchors from it are untrustworthy. Skip + record
+            # a sidecar. UNAVAILABLE (encrypted, repaired, etc.) proceeds:
+            # extraction is still useful, only page-anchor trust is reduced.
+            from pdf_extract.preflight import run_preflight
+            pf = run_preflight(pdf_path)
+            if pf["verdict"] == "FAIL":
+                n_preflight += 1
+                from pdf_extract.cache import _default_cache_root
+                pf_dir = _default_cache_root() / "preflight"
+                pf_dir.mkdir(parents=True, exist_ok=True)
+                (pf_dir / f"{citekey}-FAIL.json").write_text(
+                    json.dumps(pf, indent=1), encoding="utf-8")
+                print(f"[PREFLIGHT-FAIL] {citekey} — page-count signals disagree "
+                      f"({pf['declared_page_count']}/{pf['enumerated_page_count']}"
+                      f"/{pf['reader_page_count']}); skipping, sidecar recorded")
+                continue
+
             # Per-paper timeout via SIGALRM (Python signal handlers run in the
             # main thread only; the mem-watchdog thread never handles signals,
             # it just sends SIGALRM to the process on an RSS breach).
@@ -407,7 +428,7 @@ def main() -> int:
             watchdog_stop.set()
 
     print(f"=== done: {n_done} extracted, {n_failed} failed, {n_timeout} timeout, "
-          f"{n_skipped} skipped, {n_memguard} memguard, "
+          f"{n_skipped} skipped, {n_memguard} memguard, {n_preflight} preflight-fail, "
           f"{time.strftime('%Y-%m-%d %H:%M:%S')} ===")
     return 0
 
