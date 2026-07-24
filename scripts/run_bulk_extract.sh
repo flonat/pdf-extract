@@ -8,6 +8,11 @@
 #   PDF_EXTRACT_CACHE_DIR  — (optional) override cache root
 #   PDF_EXTRACT_MAX_RUNTIME — (optional) wall-clock budget in seconds (default 21600 = 6h)
 #   PDF_EXTRACT_MAX_PAPERS  — (optional) hard cap per run (default 2000)
+#   PDF_EXTRACT_MAX_RSS_MB  — (optional) own-RSS cap in MB (default 4096; 0 disables);
+#                             breach blocklists the paper and ends the run
+#   PDF_EXTRACT_MIN_FREE_PERCENT — (optional) stop early if system-wide free
+#                             memory %% (memory_pressure -Q) drops below this
+#                             between papers (default 15; 0 disables)
 set -euo pipefail
 
 # Resolve PDF_EXTRACT_DIR from this script's location, so the wrapper works
