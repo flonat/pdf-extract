@@ -36,12 +36,22 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--skip-ocr", action="store_true",
                    help="Skip OCR (Marker only)")
     p.add_argument("--no-cache", action="store_true", help="Bypass on-disk cache")
+    p.add_argument("--preflight", action="store_true",
+                   help="Run the read-integrity preflight (PASS/FAIL/UNAVAILABLE "
+                        "JSON sidecar) instead of extraction — run before "
+                        "trusting page anchors from this PDF")
     p.add_argument("--version", action="version", version=f"pdf-extract {EXTRACT_VERSION}")
     args = p.parse_args(argv)
 
     if not args.pdf_path.exists():
         print(f"ERROR: file not found: {args.pdf_path}", file=sys.stderr)
         return 1
+
+    if args.preflight:
+        from .preflight import run_preflight
+        json.dump(run_preflight(args.pdf_path), sys.stdout, indent=2)
+        sys.stdout.write("\n")
+        return 0
 
     doc = extract(
         args.pdf_path,
