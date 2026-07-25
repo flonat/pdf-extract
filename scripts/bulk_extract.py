@@ -181,6 +181,35 @@ def _acquire_run_lock():
     return fh
 
 
+# Shared with the other heavy-memory workloads on the Mini (currently
+# meeting-transcribe). Marker extraction and meeting diarization each peak in
+# the multi-GB range on a 16 GB machine — diarization measured 2.44 GB on a
+# 28-minute recording, scaling to ~4.8 GB near an hour, with whisper-cli at
+# ~4.1 GB alongside it. The 2026-07-20 watchdog panic was an overlap of this
+# kind. Neither job is latency-sensitive, so serialising costs almost nothing.
+HEAVY_WORKLOAD_LOCK = Path.home() / ".local" / "state" / "heavy-workload.lock"
+
+
+def _acquire_heavy_lock():
+    """Non-blocking claim on the shared heavy-workload lock.
+
+    This is the batch side: if a meeting is being transcribed, skip tonight
+    rather than queue behind it — the prewarm has no deadline and the queue is
+    still there tomorrow. meeting-transcribe takes the same lock blocking,
+    because dropping a recording loses it.
+    """
+    HEAVY_WORKLOAD_LOCK.parent.mkdir(parents=True, exist_ok=True)
+    fh = open(HEAVY_WORKLOAD_LOCK, "w")
+    try:
+        fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        fh.close()
+        return None
+    fh.write(str(os.getpid()))
+    fh.flush()
+    return fh
+
+
 def resolve_pdf(entry: dict, pdf_root: Path) -> Path | None:
     for att in entry.get("attachments", []) or []:
         if att.get("mimeType") != "application/pdf":
@@ -304,6 +333,14 @@ def main() -> int:
     run_lock = _acquire_run_lock()
     if run_lock is None:
         print("[lock] another bulk_extract instance is already running — exiting")
+        return 0
+
+    heavy_lock = _acquire_heavy_lock()
+    if heavy_lock is None:
+        print("[lock] a meeting transcription (or other heavy job) holds the "
+              "shared workload lock — skipping this run to avoid a memory "
+              "overlap; the queue keeps until the next run")
+        run_lock.close()
         return 0
 
     print(f"=== bulk_extract starting at {time.strftime('%Y-%m-%d %H:%M:%S')} ===")
