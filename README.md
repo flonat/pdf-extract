@@ -128,7 +128,7 @@ If you don't use Paperpile, skip this section — the standalone `pdf-extract` C
 
 | Machine | Default location |
 |---|---|
-| Mac Mini (SSD present) | `/Volumes/SSD/pdf-extract-cache/` |
+| Mac Mini (SSD present) | `/Volumes/SSD/caches/pdf-extract/` |
 | Other | `~/.cache/pdf-extract/` |
 | Override | `PDF_EXTRACT_CACHE_DIR=...` |
 
