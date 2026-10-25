@@ -23,7 +23,7 @@ How `pdf-extract` is consumed across the rest of the workspace.
   (profile=llm_read)
 ```
 
-All four consumers share the same on-disk cache at `/Volumes/SSD/pdf-extract-cache/` (or `PDF_EXTRACT_CACHE_DIR`). Once a PDF is extracted by any path, every other path benefits.
+All four consumers share the same on-disk cache at `/Volumes/SSD/caches/pdf-extract/` (or `PDF_EXTRACT_CACHE_DIR`). Once a PDF is extracted by any path, every other path benefits.
 
 ## paperpile (the primary consumer)
 
@@ -70,7 +70,7 @@ Schedule: nightly at 02:00 local, 6h budget, 120s per-paper SIGALRM timeout. Con
 |---|---|---|
 | `PDF_EXTRACT_MAX_RUNTIME` | `21600` (6h) | Total wall-clock budget per run |
 | `PDF_EXTRACT_MAX_PAPERS` | `2000` | Hard cap on papers per run |
-| `PDF_EXTRACT_CACHE_DIR` | `/Volumes/SSD/pdf-extract-cache` | Where extracts go |
+| `PDF_EXTRACT_CACHE_DIR` | `/Volumes/SSD/caches/pdf-extract` | Where extracts go |
 
 Logs land at `packages/pdf-extract/log/bulk-extract-YYYYMMDD-HHMMSS.log`. Each line:
 
