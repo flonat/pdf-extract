@@ -9,7 +9,7 @@
 		<key>PAPERPILE_JSON</key>
 		<string>/Users/USERNAME/Research-Vault/.paperpile/paperpile-backup.json</string>
 		<key>PAPERPILE_PDF_ROOT</key>
-		<string>/Volumes/SSD/paperpile-pdfs</string>
+		<string>/Volumes/SSD/mirrors/paperpile-pdfs</string>
 		<key>PATH</key>
 		<string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
 		<key>PDF_EXTRACT_CACHE_DIR</key>
