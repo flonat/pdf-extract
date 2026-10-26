@@ -23,17 +23,14 @@ from .models import ExtractedDoc
 def _default_cache_root() -> Path:
     """Per-machine cache root.
 
-    Mac Mini: /Volumes/SSD/caches/pdf-extract (high-capacity SSD).
-    Other:    ~/.cache/pdf-extract (XDG-style).
+    ~/.cache/pdf-extract (XDG-style) on every machine. The Mac Mini used
+    /Volumes/SSD/caches/pdf-extract until 2026-10-26.
 
     Override via PDF_EXTRACT_CACHE_DIR env var.
     """
     env = os.environ.get("PDF_EXTRACT_CACHE_DIR")
     if env:
         return Path(env)
-    ssd = Path("/Volumes/SSD/caches/pdf-extract")
-    if ssd.parent.exists():
-        return ssd
     return Path.home() / ".cache" / "pdf-extract"
 
 

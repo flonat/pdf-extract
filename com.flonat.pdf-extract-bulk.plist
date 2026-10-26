@@ -13,7 +13,7 @@
 		<key>PATH</key>
 		<string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
 		<key>PDF_EXTRACT_CACHE_DIR</key>
-		<string>/Volumes/SSD/caches/pdf-extract</string>
+		<string>/Users/florianburnat/.cache/pdf-extract</string>
 		<key>PYTHONUNBUFFERED</key>
 		<string>1</string>
 		<key>RESEARCH_PROJECTS_ROOT</key>
