@@ -8,8 +8,7 @@ Designed to run nightly via launchd in a time-bounded window. Each run:
   4. Runs `extract(..., backend='marker')` per paper until time budget exhausted.
   5. Logs structured progress to stdout (captured by launchd to log file).
 
-Cache directory: see `pdf_extract.cache._default_cache_root()`. On macOS this
-defaults to `/Volumes/SSD/caches/pdf-extract/` if that volume exists, else
+Cache directory: see `pdf_extract.cache._default_cache_root()`. It defaults to
 `~/.cache/pdf-extract/`. Override with `PDF_EXTRACT_CACHE_DIR=...`.
 
 Configuration is via env vars (with CLI overrides). All paths must be set —

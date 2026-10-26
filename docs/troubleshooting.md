@@ -91,7 +91,7 @@ cache.evict(Path("paper.pdf"), "marker", "0.1.0")
 
 ## Disk fills up
 
-**Symptom:** `/Volumes/SSD/caches/pdf-extract/` grows beyond expected size.
+**Symptom:** `~/.cache/pdf-extract/` grows beyond expected size.
 
 **Reference numbers:** ~25k papers × ~5 figures × ~200KB ≈ 25GB. JSON docs are typically 50-100KB each → another ~2GB. Realistic ceiling: ~30GB.
 
@@ -99,7 +99,7 @@ cache.evict(Path("paper.pdf"), "marker", "0.1.0")
 
 ```bash
 # Drop entries not accessed in 60 days
-find /Volumes/SSD/caches/pdf-extract -maxdepth 1 -type d \
+find ~/.cache/pdf-extract -maxdepth 1 -type d \
      -mtime +60 -name "*_marker_v*" -exec rm -rf {} +
 ```
 
@@ -134,17 +134,17 @@ warnings.filterwarnings("ignore", category=UserWarning, module="surya")
 
 ```bash
 # Count cached entries by backend
-ls /Volumes/SSD/caches/pdf-extract | awk -F_ '{print $2"_"$3}' | sort | uniq -c
+ls ~/.cache/pdf-extract | awk -F_ '{print $2"_"$3}' | sort | uniq -c
 
 # Total disk usage
-du -sh /Volumes/SSD/caches/pdf-extract
+du -sh ~/.cache/pdf-extract
 
 # Find a specific PDF in cache
 sha=$(python3 -c "import hashlib; print(hashlib.sha1(open('paper.pdf','rb').read()).hexdigest()[:16])")
-ls /Volumes/SSD/caches/pdf-extract/${sha}_*
+ls ~/.cache/pdf-extract/${sha}_*
 
 # View extracted markdown for a cached PDF
-cat /Volumes/SSD/caches/pdf-extract/${sha}_marker_v0.1.0/doc.json | jq -r .markdown | head -50
+cat ~/.cache/pdf-extract/${sha}_marker_v0.1.0/doc.json | jq -r .markdown | head -50
 ```
 
 ## How to force a re-extraction
